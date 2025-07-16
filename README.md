@@ -20,7 +20,7 @@ A powerful, TUI-driven command-line tool for seamless conversion between images 
 
 1.  **Clone the repository (or download the script):**
     ```bash
-    git clone https://github.com/your-username/pixelvector.git
+    git clone https://github.com/rkstudio585/pixelvector.git
     cd pixelvector
     ```
 
