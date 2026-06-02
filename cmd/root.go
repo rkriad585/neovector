@@ -7,6 +7,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/rkriad585/neovector/internal/config"
+	"github.com/rkriad585/neovector/internal/version"
 )
 
 var (
@@ -16,8 +17,7 @@ var (
 	Yellow = color.New(color.FgYellow)
 	Magenta = color.New(color.FgMagenta)
 
-	Version = "dev"
-	appCfg  *config.Config
+	appCfg *config.Config
 )
 
 var rootCmd = &cobra.Command{
@@ -28,7 +28,7 @@ and their numerical vector representations (flat lists of RGB pixel values).
 
 It supports converting images to vectors, reconstructing images from vectors,
 and inspecting dimensions of images or vector files.`,
-	Version: "dev",
+	Version: version.Version,
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		return initSystem()
 	},
@@ -44,9 +44,7 @@ func initSystem() error {
 }
 
 func Execute() {
-	if Version != "" {
-		rootCmd.Version = Version
-	}
+	rootCmd.Version = version.Version
 	if err := rootCmd.Execute(); err != nil {
 		Red.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
