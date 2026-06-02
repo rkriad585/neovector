@@ -60,11 +60,24 @@ func initSystem() error {
 	return nil
 }
 
+var versionCmd = &cobra.Command{
+	Use:   "version",
+	Short: "Print the version and build information",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		Cyan.Printf("  neovector %s (commit: %s)\n", version.Version, version.Commit)
+		return nil
+	},
+}
+
+func init() {
+	rootCmd.AddCommand(versionCmd)
+}
+
 func Execute() {
 	banner.Print()
 
 	for _, arg := range os.Args[1:] {
-		if arg == "--selfuninstall" || arg == "--uninstall" || arg == "-u" {
+		if arg == "--selfuninstall" || arg == "--uninstall" || arg == "--self-uninstall" || arg == "-u" {
 			if arg != "-u" || isTopLevelUninstall() {
 				os.Exit(uninstall.Run())
 			}
