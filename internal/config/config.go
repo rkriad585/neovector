@@ -15,16 +15,24 @@ const (
 
 type Config struct {
 	General GeneralConfig `toml:"general"`
+	Network NetworkConfig `toml:"network"`
 }
 
 type GeneralConfig struct {
 	DefaultFormat string `toml:"default_format"`
 }
 
+type NetworkConfig struct {
+	Proxy string `toml:"proxy"`
+}
+
 func DefaultConfig() *Config {
 	return &Config{
 		General: GeneralConfig{
 			DefaultFormat: "txt",
+		},
+		Network: NetworkConfig{
+			Proxy: "",
 		},
 	}
 }
