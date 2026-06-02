@@ -1,94 +1,69 @@
-# PixelVector
+# neovector
 
-A powerful, TUI-driven command-line tool for seamless conversion between images and their numerical vector representations.
+A fast CLI tool for seamless conversion between images and their numerical vector representations, rewritten in Go.
 
-![PixelVector Demo](https://storage.googleapis.com/gemini-assistant-tool-files/2024/05/pixel-vector-demo.gif)  <!-- Replace with an actual demo GIF if you create one -->
-
----
-
-## ✨ Key Features
-
-- **All-in-One Tool:** A single script to handle all conversions and checks.
-- **Rich TUI:** A beautiful and intuitive interface powered by the `rich` library, featuring styled panels, tables, and progress bars.
-- **Clear Sub-commands:** Easy-to-use sub-commands (`convert`, `check`) for clear and separate actions.
-- **Multiple Formats:** Supports both plain text (`.txt`) and JSON (`.json`) for vector files.
-- **Dimension Analysis:** Automatically calculates and displays possible image dimensions from a vector file.
-
----
-
-## 🚀 Installation
-
-1.  **Clone the repository (or download the script):**
-    ```bash
-    git clone https://github.com/rkstudio585/pixelvector.git
-    cd pixelvector
-    ```
-
-2.  **Install the required Python libraries:**
-    PixelVector requires `Pillow` for image processing and `rich` for the enhanced TUI. You can install them using pip:
-    ```bash
-    pip install Pillow rich
-    ```
-
----
-
-## 🛠️ Usage
-
-The tool is organized into two main sub-commands: `convert` and `check`.
-
-### 1. Convert an Image to a Vector
-
-This command takes an image file and converts it into a numerical vector.
+## Installation
 
 ```bash
-python img-vec-tool.py convert to-vector <input_image> <output_file> [--format <format>]
+go install github.com/rkriad585/neovector@latest
 ```
 
-**Example:**
+Or build from source:
+
 ```bash
-python img-vec-tool.py convert to-vector my_image.png vector.txt --format txt
+git clone https://github.com/rkriad585/neovector.git
+cd neovector
+go build -o neovector.exe .
 ```
 
-### 2. Convert a Vector to an Image
+## Usage
 
-This command reconstructs an image from a vector file. You must provide the correct width and height of the target image.
-
-```bash
-python img-vec-tool.py convert to-image <input_file> <output_image> <width> <height> [--format <format>]
-```
-
-**Example:**
-```bash
-python img-vec-tool.py convert to-image vector.txt new_image.png 1920 1080
-```
-
-### 3. Check Dimensions
-
-This command is used to inspect the dimensions of an image or the size and possible dimensions of a vector file. This is very useful for finding the correct `width` and `height` for the `to-image` command.
+### Convert an image to a vector
 
 ```bash
-python img-vec-tool.py check [--image <path>] [--vector <path>]
+neovector convert to-vector <input> <output> [--format txt|json]
 ```
 
 **Examples:**
+```bash
+neovector convert to-vector image.png vector.txt --format txt
+neovector convert to-vector image.jpg vector.json --format json
+```
 
-- **Check an image:**
-  ```bash
-  python img-vec-tool.py check --image my_image.png
-  ```
+### Convert a vector back to an image
 
-- **Check a vector file:**
-  ```bash
-  python img-vec-tool.py check --vector vector.txt
-  ```
+```bash
+neovector convert to-image <input> <output> <width> <height> [--format txt|json]
+```
 
-- **Check both at once for a quick comparison:**
-  ```bash
-  python img-vec-tool.py check --image my_image.png --vector vector.txt
-  ```
+**Example:**
+```bash
+neovector convert to-image vector.txt restored.png 1920 1080
+```
 
----
+### Check dimensions
 
-## 📄 License
+```bash
+neovector check [--image <path>] [--vector <path>] [--format txt|json]
+```
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+**Examples:**
+```bash
+neovector check --image image.png
+neovector check --vector vector.txt
+neovector check --image image.png --vector vector.txt
+```
+
+### Help
+
+```bash
+neovector --help
+neovector convert --help
+neovector convert to-vector --help
+neovector convert to-image --help
+neovector check --help
+```
+
+## License
+
+MIT License. See [LICENSE](LICENSE) for details.
