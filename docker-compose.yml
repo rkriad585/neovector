@@ -1,0 +1,18 @@
+services:
+  neovector:
+    build:
+      context: .
+      args:
+        VERSION: ${VERSION:-v0.1.0}
+        COMMIT: ${COMMIT:-unknown}
+        PUBLISHER_NAME: rkriad585
+        PUBLISHER_EMAIL: rkriad585@gmail.com
+    image: rkriad585/neovector:latest
+    container_name: neovector
+    entrypoint: ["neovector"]
+    command: ["--help"]
+    volumes:
+      - ./test_images:/data:ro
+      - ./output:/output
+    environment:
+      - TZ=UTC
