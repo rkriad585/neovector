@@ -2,10 +2,12 @@ package cmd
 
 import (
 	"os"
+	"sync"
 
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 
+	"github.com/rkriad585/neovector/internal/banner"
 	"github.com/rkriad585/neovector/internal/config"
 	"github.com/rkriad585/neovector/internal/version"
 )
@@ -17,7 +19,8 @@ var (
 	Yellow = color.New(color.FgYellow)
 	Magenta = color.New(color.FgMagenta)
 
-	appCfg *config.Config
+	appCfg   *config.Config
+	bannerOnce sync.Once
 )
 
 var rootCmd = &cobra.Command{
@@ -30,6 +33,7 @@ It supports converting images to vectors, reconstructing images from vectors,
 and inspecting dimensions of images or vector files.`,
 	Version: version.Version,
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+		bannerOnce.Do(func() { banner.Print() })
 		return initSystem()
 	},
 }
