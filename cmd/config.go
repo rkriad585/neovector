@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/charmbracelet/huh"
@@ -149,6 +150,10 @@ func configEditForm() error {
 	)
 
 	if err := form.Run(); err != nil {
+		if errors.Is(err, huh.ErrUserAborted) {
+			Yellow.Println("  Canceled.")
+			return nil
+		}
 		return fmt.Errorf("failed to open config editor: %w", err)
 	}
 
@@ -248,6 +253,10 @@ func configThemeEditForm() error {
 	)
 
 	if err := form.Run(); err != nil {
+		if errors.Is(err, huh.ErrUserAborted) {
+			Yellow.Println("  Canceled.")
+			return nil
+		}
 		return fmt.Errorf("failed to open theme picker: %w", err)
 	}
 

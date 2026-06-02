@@ -3,7 +3,7 @@ services:
     build:
       context: .
       args:
-        VERSION: ${VERSION:-v0.1.6}
+        VERSION: ${VERSION:-v0.1.7}
         COMMIT: ${COMMIT:-unknown}
         PUBLISHER_NAME: rkriad585
         PUBLISHER_EMAIL: rkriad585@gmail.com

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"runtime"
 	"strings"
@@ -37,14 +38,18 @@ func selfUpdateRun(cmd *cobra.Command, args []string) error {
 	fmt.Println("Checking for neovector updates...")
 	fmt.Println()
 
+	transport := &http.Transport{}
 	proxyURL := resolveProxy(cmd)
 	if proxyURL != "" {
 		Yellow.Printf("  Using proxy: %s\n", proxyURL)
-		os.Setenv("HTTP_PROXY", proxyURL)
-		os.Setenv("HTTPS_PROXY", proxyURL)
+		proxyParsed, err := url.Parse(proxyURL)
+		if err != nil {
+			return fmt.Errorf("invalid proxy URL %q: %w", proxyURL, err)
+		}
+		transport.Proxy = http.ProxyURL(proxyParsed)
 	}
 
-	client := &http.Client{Timeout: 30 * time.Second}
+	client := &http.Client{Transport: transport, Timeout: 30 * time.Second}
 
 	remoteVersion, err := fetchRemoteVersion(client, cmd)
 	if err != nil {
@@ -77,7 +82,7 @@ func selfUpdateRun(cmd *cobra.Command, args []string) error {
 
 	Cyan.Printf("  Downloading from: %s\n", downloadURL)
 
-	dlClient := &http.Client{Timeout: 5 * time.Minute}
+	dlClient := &http.Client{Transport: transport, Timeout: 5 * time.Minute}
 	dlReq, err := http.NewRequestWithContext(cmd.Context(), "GET", downloadURL, nil)
 	if err != nil {
 		return fmt.Errorf("failed to create download request: %w", err)
@@ -92,7 +97,7 @@ func selfUpdateRun(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to download release binary: server returned %s", dlResp.Status)
 	}
 
-	if err := replaceBinary(exePath, remoteVersion, dlResp.Body); err != nil {
+	if err := replaceBinary(exePath, remoteVersion, dlResp.Body, dlResp.ContentLength); err != nil {
 		return err
 	}
 
@@ -139,7 +144,7 @@ func fetchRemoteVersion(client *http.Client, cmd *cobra.Command) (string, error)
 	return remoteVersion, nil
 }
 
-func replaceBinary(exePath, remoteVersion string, body io.Reader) error {
+func replaceBinary(exePath, remoteVersion string, body io.Reader, contentLength int64) error {
 	tempPath := exePath + ".tmp"
 	os.Remove(tempPath)
 
@@ -159,10 +164,16 @@ func replaceBinary(exePath, remoteVersion string, body io.Reader) error {
 	progressWriter := &WriteCounter{}
 	teeReader := io.TeeReader(body, progressWriter)
 
-	if _, err := io.Copy(tempFile, teeReader); err != nil {
+	written, err := io.Copy(tempFile, teeReader)
+	if err != nil {
 		return fmt.Errorf("failed to write binary content: %w", err)
 	}
-	tempFile.Close()
+	if contentLength > 0 && written != contentLength {
+		return fmt.Errorf("downloaded %d bytes, expected %d bytes; download may be incomplete", written, contentLength)
+	}
+	if err := tempFile.Close(); err != nil {
+		return fmt.Errorf("failed to finalize downloaded file: %w", err)
+	}
 	fmt.Println()
 
 	oldPath := exePath + ".old"
@@ -173,18 +184,22 @@ func replaceBinary(exePath, remoteVersion string, body io.Reader) error {
 			return fmt.Errorf("failed to rename running executable: %w", err)
 		}
 		if err := os.Rename(tempPath, exePath); err != nil {
-			os.Rename(oldPath, exePath)
+			if rerr := os.Rename(oldPath, exePath); rerr != nil {
+				return fmt.Errorf("failed to install new executable: %w; rollback also failed: %v; binary left at %s", err, rerr, oldPath)
+			}
 			return fmt.Errorf("failed to install new executable: %w", err)
 		}
 		cleanup = false
 		Green.Printf("  Success! neovector has been updated to %s.\n", remoteVersion)
-		Yellow.Println("  Note: You can safely delete", oldPath, "after closing this session.")
+		Yellow.Printf("  Note: You can safely delete %s after closing this session.\n", oldPath)
 	} else {
 		if err := os.Rename(tempPath, exePath); err != nil {
 			return fmt.Errorf("failed to install new executable: %w", err)
 		}
 		cleanup = false
-		os.Chmod(exePath, 0755)
+		if err := os.Chmod(exePath, 0755); err != nil {
+			Yellow.Printf("  Warning: could not set executable permissions: %v\n", err)
+		}
 		Green.Printf("  Success! neovector has been updated to %s.\n", remoteVersion)
 	}
 

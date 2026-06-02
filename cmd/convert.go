@@ -27,6 +27,21 @@ var convertCmd = &cobra.Command{
 	},
 }
 
+func resolveFormat(cmd *cobra.Command, filePath string) string {
+	if cmd.Flags().Changed("format") {
+		format, _ := cmd.Flags().GetString("format")
+		return format
+	}
+	if strings.HasSuffix(strings.ToLower(filePath), ".json") {
+		return "json"
+	}
+	cfg := config.Get()
+	if cfg.General.DefaultFormat != "" {
+		return cfg.General.DefaultFormat
+	}
+	return "txt"
+}
+
 var toVectorCmd = &cobra.Command{
 	Use:   "to-vector <input> <output>",
 	Short: "Convert an image to a numerical vector",
@@ -43,7 +58,7 @@ Example:
 	RunE: func(cmd *cobra.Command, args []string) error {
 		input := config.ResolveInput(args[0])
 		output := config.ResolveOutput(args[1])
-		format, _ := cmd.Flags().GetString("format")
+		format := resolveFormat(cmd, output)
 
 		Cyan.Printf("Converting %s to a numerical vector...\n", input)
 
@@ -53,7 +68,8 @@ Example:
 			return err
 		}
 
-		if err := ensureOutputDir(); err != nil {
+		if err := config.EnsureOutputDir(); err != nil {
+			Red.Printf("Error creating output directory: %v\n", err)
 			return err
 		}
 		if err := saveVector(vector, output, format); err != nil {
@@ -84,7 +100,7 @@ Example:
 	RunE: func(cmd *cobra.Command, args []string) error {
 		input := config.ResolveInput(args[0])
 		output := config.ResolveOutput(args[1])
-		format, _ := cmd.Flags().GetString("format")
+		format := resolveFormat(cmd, input)
 
 		width, err := strconv.Atoi(args[2])
 		if err != nil || width <= 0 {
@@ -96,6 +112,10 @@ Example:
 			Red.Println("Error: height must be a positive integer")
 			return fmt.Errorf("invalid height")
 		}
+		if width > 65535 || height > 65535 {
+			Red.Println("Error: dimensions too large (maximum 65535 each)")
+			return fmt.Errorf("dimensions too large: %dx%d", width, height)
+		}
 
 		Cyan.Printf("Reconstructing image from %s...\n", input)
 
@@ -105,7 +125,8 @@ Example:
 			return err
 		}
 
-		if err := ensureOutputDir(); err != nil {
+		if err := config.EnsureOutputDir(); err != nil {
+			Red.Printf("Error creating output directory: %v\n", err)
 			return err
 		}
 		if err := vectorToImage(vector, width, height, output); err != nil {
@@ -120,18 +141,20 @@ Example:
 	},
 }
 
-func ensureOutputDir() error {
-	if err := config.EnsureOutputDir(); err != nil {
-		Red.Printf("Error creating output directory: %v\n", err)
-		return err
+func clamp(v int) uint8 {
+	if v < 0 {
+		return 0
 	}
-	return nil
+	if v > 255 {
+		return 255
+	}
+	return uint8(v)
 }
 
 func imageToVector(path string) ([]int, error) {
 	file, err := os.Open(path)
 	if err != nil {
-		return nil, fmt.Errorf("image file not found at %s", path)
+		return nil, fmt.Errorf("failed to open image %s: %w", path, err)
 	}
 	defer file.Close()
 
@@ -162,9 +185,9 @@ func vectorToImage(data []int, width, height int, outputPath string) error {
 	for y := 0; y < height; y++ {
 		for x := 0; x < width; x++ {
 			img.Set(x, y, color.RGBA{
-				R: uint8(data[idx]),
-				G: uint8(data[idx+1]),
-				B: uint8(data[idx+2]),
+				R: clamp(data[idx]),
+				G: clamp(data[idx+1]),
+				B: clamp(data[idx+2]),
 				A: 255,
 			})
 			idx += 3
@@ -175,49 +198,69 @@ func vectorToImage(data []int, width, height int, outputPath string) error {
 	if err != nil {
 		return fmt.Errorf("failed to create output file: %w", err)
 	}
-	defer out.Close()
 
 	ext := strings.ToLower(filepath.Ext(outputPath))
+	encodeErr := error(nil)
 	switch ext {
 	case ".jpg", ".jpeg":
-		return jpeg.Encode(out, img, &jpeg.Options{Quality: 95})
+		encodeErr = jpeg.Encode(out, img, &jpeg.Options{Quality: 95})
 	default:
-		return png.Encode(out, img)
+		encodeErr = png.Encode(out, img)
 	}
+	if closeErr := out.Close(); closeErr != nil && encodeErr == nil {
+		encodeErr = fmt.Errorf("failed to close output file: %w", closeErr)
+	}
+	if encodeErr != nil {
+		os.Remove(outputPath)
+		return encodeErr
+	}
+	return nil
 }
 
 func saveVector(data []int, path, format string) error {
 	file, err := os.Create(path)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create vector file: %w", err)
 	}
-	defer file.Close()
 
+	encodeErr := error(nil)
 	switch format {
 	case "json":
 		encoder := json.NewEncoder(file)
 		encoder.SetIndent("", "  ")
-		return encoder.Encode(data)
+		encodeErr = encoder.Encode(data)
 	default:
 		w := bufio.NewWriter(file)
 		for i, v := range data {
 			if i > 0 {
 				if err := w.WriteByte('\n'); err != nil {
-					return err
+					encodeErr = err
+					break
 				}
 			}
 			if _, err := fmt.Fprint(w, v); err != nil {
-				return err
+				encodeErr = err
+				break
 			}
 		}
-		return w.Flush()
+		if encodeErr == nil {
+			encodeErr = w.Flush()
+		}
 	}
+	if closeErr := file.Close(); closeErr != nil && encodeErr == nil {
+		encodeErr = fmt.Errorf("failed to close vector file: %w", closeErr)
+	}
+	if encodeErr != nil {
+		os.Remove(path)
+		return encodeErr
+	}
+	return nil
 }
 
 func readVector(path, format string) ([]int, error) {
 	file, err := os.Open(path)
 	if err != nil {
-		return nil, fmt.Errorf("vector file not found at %s", path)
+		return nil, fmt.Errorf("failed to open vector file %s: %w", path, err)
 	}
 	defer file.Close()
 

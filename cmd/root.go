@@ -43,16 +43,12 @@ and their numerical vector representations (flat lists of RGB pixel values).
 
 It supports converting images to vectors, reconstructing images from vectors,
 and inspecting dimensions of images or vector files.`,
-	Version: version.Version,
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		return initSystem()
 	},
 }
 
 func initSystem() error {
-	if err := config.EnsureConfigDir(); err != nil {
-		return err
-	}
 	cfg := config.Get()
 	if cfg.Theme.Name != "" {
 		applyTheme(cfg.Theme.Name)
@@ -74,15 +70,20 @@ func init() {
 }
 
 func Execute() {
-	banner.Print()
-
 	for _, arg := range os.Args[1:] {
-		if arg == "--selfuninstall" || arg == "--uninstall" || arg == "--self-uninstall" || arg == "-u" {
-			if arg != "-u" || isTopLevelUninstall() {
+		if arg == "--selfuninstall" || arg == "--uninstall" || arg == "--self-uninstall" {
+			if isTopLevelUninstall() {
+				os.Exit(uninstall.Run())
+			}
+		}
+		if arg == "-u" {
+			if isTopLevelUninstall() && !hasHelpFlags() {
 				os.Exit(uninstall.Run())
 			}
 		}
 	}
+
+	banner.Print()
 
 	rootCmd.Version = version.Version
 	if err := rootCmd.Execute(); err != nil {
@@ -91,7 +92,7 @@ func Execute() {
 	}
 }
 
-// isTopLevelUninstall ensures -u is not consumed by a subcommand.
+// isTopLevelUninstall ensures uninstall flags are not consumed by a subcommand.
 func isTopLevelUninstall() bool {
 	for _, arg := range os.Args[1:] {
 		if !strings.HasPrefix(arg, "-") {
@@ -99,4 +100,14 @@ func isTopLevelUninstall() bool {
 		}
 	}
 	return true
+}
+
+// hasHelpFlags checks if --help or --version is present alongside -u.
+func hasHelpFlags() bool {
+	for _, arg := range os.Args[1:] {
+		if arg == "--help" || arg == "-h" || arg == "--version" || arg == "-v" {
+			return true
+		}
+	}
+	return false
 }
