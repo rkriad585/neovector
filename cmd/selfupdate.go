@@ -103,8 +103,8 @@ func resolveProxy(cmd *cobra.Command) string {
 	if p, _ := cmd.Flags().GetString("proxy"); p != "" {
 		return p
 	}
-	if appCfg != nil && appCfg.Network.Proxy != "" {
-		return appCfg.Network.Proxy
+	if cfg := config.Get(); cfg.Network.Proxy != "" {
+		return cfg.Network.Proxy
 	}
 	return ""
 }

@@ -19,8 +19,6 @@ var (
 	Red    = color.New(color.FgRed, color.Bold)
 	Yellow = color.New(color.FgYellow)
 	Magenta = color.New(color.FgMagenta)
-
-	appCfg *config.Config
 )
 
 var rootCmd = &cobra.Command{
@@ -41,9 +39,8 @@ func initSystem() error {
 	if err := config.EnsureConfigDir(); err != nil {
 		return err
 	}
-	var err error
-	appCfg, err = config.LoadConfig()
-	return err
+	config.Get()
+	return nil
 }
 
 func Execute() {

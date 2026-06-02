@@ -3,6 +3,7 @@ package config
 import (
 	"os"
 	"path/filepath"
+	"sync"
 
 	"github.com/BurntSushi/toml"
 )
@@ -25,6 +26,11 @@ type GeneralConfig struct {
 type NetworkConfig struct {
 	Proxy string `toml:"proxy"`
 }
+
+var (
+	global *Config
+	mu     sync.RWMutex
+)
 
 func DefaultConfig() *Config {
 	return &Config{
@@ -57,11 +63,33 @@ func ConfigPath() string {
 	return ConfigFile("config.toml")
 }
 
-func LoadConfig() (*Config, error) {
+func Get() *Config {
+	mu.RLock()
+	if global != nil {
+		mu.RUnlock()
+		return global
+	}
+	mu.RUnlock()
+
+	mu.Lock()
+	defer mu.Unlock()
+	if global != nil {
+		return global
+	}
+
+	cfg, err := Load()
+	if err != nil {
+		cfg = DefaultConfig()
+	}
+	global = cfg
+	return cfg
+}
+
+func Load() (*Config, error) {
 	path := ConfigPath()
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		cfg := DefaultConfig()
-		if err := SaveConfig(cfg); err != nil {
+		if err := Save(cfg); err != nil {
 			return nil, err
 		}
 		return cfg, nil
@@ -74,7 +102,7 @@ func LoadConfig() (*Config, error) {
 	return &cfg, nil
 }
 
-func SaveConfig(cfg *Config) error {
+func Save(cfg *Config) error {
 	path := ConfigPath()
 	if err := EnsureConfigDir(); err != nil {
 		return err
@@ -85,6 +113,29 @@ func SaveConfig(cfg *Config) error {
 	}
 	defer file.Close()
 	return toml.NewEncoder(file).Encode(cfg)
+}
+
+// Set saves cfg to disk and replaces the in-memory global.
+func Set(cfg *Config) error {
+	if err := Save(cfg); err != nil {
+		return err
+	}
+	mu.Lock()
+	global = cfg
+	mu.Unlock()
+	return nil
+}
+
+// LoadConfig is the legacy loader kept for backward compatibility.
+// New code should use Get() or Load() instead.
+func LoadConfig() (*Config, error) {
+	return Load()
+}
+
+// SaveConfig is the legacy saver kept for backward compatibility.
+// New code should use Save() or Set() instead.
+func SaveConfig(cfg *Config) error {
+	return Save(cfg)
 }
 
 func LogPath() string {
