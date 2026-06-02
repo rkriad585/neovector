@@ -5,6 +5,8 @@ import (
 
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
+
+	"github.com/rkriad585/neovector/internal/config"
 )
 
 var (
@@ -15,6 +17,7 @@ var (
 	Magenta = color.New(color.FgMagenta)
 
 	Version = "dev"
+	appCfg  *config.Config
 )
 
 var rootCmd = &cobra.Command{
@@ -26,6 +29,18 @@ and their numerical vector representations (flat lists of RGB pixel values).
 It supports converting images to vectors, reconstructing images from vectors,
 and inspecting dimensions of images or vector files.`,
 	Version: "dev",
+	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+		return initSystem()
+	},
+}
+
+func initSystem() error {
+	if err := config.EnsureConfigDir(); err != nil {
+		return err
+	}
+	var err error
+	appCfg, err = config.LoadConfig()
+	return err
 }
 
 func Execute() {

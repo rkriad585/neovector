@@ -14,6 +14,9 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
+
+	"github.com/rkriad585/neovector/internal/config"
+	"github.com/rkriad585/neovector/internal/log"
 )
 
 var convertCmd = &cobra.Command{
@@ -30,13 +33,16 @@ var toVectorCmd = &cobra.Command{
 	Long: `Convert an image file into a flat list of RGB pixel values.
 Supports txt and json output formats.
 
+Output is saved to ~/Downloads/neostore/neovector/ by default.
+Provide an absolute or relative path to save elsewhere.
+
 Example:
   neovector convert to-vector image.png vector.txt --format txt
   neovector convert to-vector image.jpg vector.json --format json`,
 	Args: cobra.ExactArgs(2),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		input := args[0]
-		output := args[1]
+		input := config.ResolveInput(args[0])
+		output := config.ResolveOutput(args[1])
 		format, _ := cmd.Flags().GetString("format")
 
 		Cyan.Printf("Converting %s to a numerical vector...\n", input)
@@ -47,6 +53,9 @@ Example:
 			return err
 		}
 
+		if err := ensureOutputDir(); err != nil {
+			return err
+		}
 		if err := saveVector(vector, output, format); err != nil {
 			Red.Printf("Error saving vector file: %v\n", err)
 			return err
@@ -54,6 +63,8 @@ Example:
 
 		Green.Printf("Success! Vector saved to %s (%s).\n", output, strings.ToUpper(format))
 		fmt.Printf("  - Vector Size: %d values\n", len(vector))
+
+		log.Write(fmt.Sprintf("to-vector: %s -> %s [%s, %d values]", input, output, format, len(vector)))
 		return nil
 	},
 }
@@ -64,13 +75,15 @@ var toImageCmd = &cobra.Command{
 	Long: `Reconstruct an image from a vector file.
 You must provide the original width and height of the image.
 
+Output is saved to ~/Downloads/neostore/neovector/ by default.
+
 Example:
   neovector convert to-image vector.txt restored.png 1920 1080
   neovector convert to-image vector.json restored.png 800 600 --format json`,
 	Args: cobra.ExactArgs(4),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		input := args[0]
-		output := args[1]
+		input := config.ResolveInput(args[0])
+		output := config.ResolveOutput(args[1])
 		format, _ := cmd.Flags().GetString("format")
 
 		width, err := strconv.Atoi(args[2])
@@ -92,14 +105,27 @@ Example:
 			return err
 		}
 
+		if err := ensureOutputDir(); err != nil {
+			return err
+		}
 		if err := vectorToImage(vector, width, height, output); err != nil {
 			Red.Printf("Error creating image: %v\n", err)
 			return err
 		}
 
 		Green.Printf("Success! Image saved to %s.\n", output)
+
+		log.Write(fmt.Sprintf("to-image: %s -> %s [%dx%d, %d values]", input, output, width, height, len(vector)))
 		return nil
 	},
+}
+
+func ensureOutputDir() error {
+	if err := config.EnsureOutputDir(); err != nil {
+		Red.Printf("Error creating output directory: %v\n", err)
+		return err
+	}
+	return nil
 }
 
 func imageToVector(path string) ([]int, error) {
