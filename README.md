@@ -80,6 +80,20 @@ neovector self-update
 neovector self-update --proxy http://proxy:8080
 ```
 
+### Configuration
+
+```bash
+# View current config
+neovector config
+
+# Set values directly
+neovector config --format json
+neovector config --proxy http://proxy:8080
+
+# Interactive TUI editor
+neovector config --edit
+```
+
 ### Self-uninstall
 
 ```bash
