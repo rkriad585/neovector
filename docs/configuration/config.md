@@ -15,6 +15,9 @@ Created automatically on first run.
 ```toml
 [general]
 default_format = "txt"
+
+[network]
+proxy = ""
 ```
 
 ### Options
@@ -22,6 +25,7 @@ default_format = "txt"
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
 | `general.default_format` | string | `"txt"` | Default vector format: `txt` or `json` |
+| `network.proxy` | string | `""` | Proxy URL for self-update (e.g. `http://proxy:8080`) |
 
 ## history.log
 

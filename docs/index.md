@@ -21,6 +21,8 @@ neovector convert to-image vector.txt restored.png 1920 1080
 
 - [Setup Guides](setup/windows.md)
 - [Usage Guides](usage/to-vector.md)
+- [Self-Update](usage/self-update.md)
+- [Self-Uninstall](usage/self-uninstall.md)
 - [Configuration](configuration/config.md)
 - [Development](development/build.md)
 - [Troubleshooting](troubleshooting.md)
