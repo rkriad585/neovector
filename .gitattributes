@@ -1,0 +1,39 @@
+# Always use LF line endings for Go source files
+*.go text eol=lf
+*.mod text eol=lf
+*.sum text eol=lf
+
+# Shell scripts (LF required)
+*.sh text eol=lf
+
+# Config files
+*.yml text eol=lf
+*.yaml text eol=lf
+*.toml text eol=lf
+*.json text eol=lf
+*.md text eol=lf
+
+# Docker
+Dockerfile text eol=lf
+Dockerfile.* text eol=lf
+
+# Makefile / CMake
+Makefile text eol=lf
+CMakeLists.txt text eol=lf
+
+# Binary files
+*.exe binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+
+# Version file
+.version text eol=lf
+
+# Git files
+.gitignore text eol=lf
+.gitattributes text eol=lf
+.dockerignore text eol=lf
+
+# PowerShell scripts can keep Windows native
+*.ps1 text eol=crlf
