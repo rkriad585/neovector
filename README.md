@@ -10,6 +10,8 @@ numerical vector representations (flat lists of RGB pixel values).
 - **Dimension analysis** — inspect images and find possible dimensions
 - **Self-update** — update to the latest version with `neovector self-update`
 - **Self-uninstall** — fully remove neovector with `neovector --selfuninstall`
+- **13 Color Themes** — switch themes with `neovector config theme <name>`
+- **Dark / Light mode** — adapt the UI to your terminal background
 - **Cross-platform** — Windows, Linux, macOS binaries
 - **Portable** — single static binary, no runtime dependencies
 - **Configurable** — config.toml at `~/.config/neostore/neovector/`
@@ -92,6 +94,11 @@ neovector config --proxy http://proxy:8080
 
 # Interactive TUI editor
 neovector config --edit
+
+# Theme management
+neovector config theme              # Show current theme + all themes
+neovector config theme <name>       # Switch theme directly
+neovector config theme --edit       # Interactive theme picker
 ```
 
 ### Self-uninstall
@@ -118,6 +125,10 @@ default_format = "txt"
 
 [network]
 proxy = ""
+
+[theme]
+name = "sunny_beach_day"
+mode = "dark"
 ```
 
 History log: `~/.config/neostore/neovector/history.log`
@@ -160,10 +171,12 @@ neovector/
 │   ├── convert.go          # to-vector, to-image subcommands
 │   ├── check.go            # dimension analysis
 │   ├── selfupdate.go       # self-update command
+│   └── config.go           # config + config theme subcommand
 ├── internal/
 │   ├── banner/             # Startup banner
 │   ├── config/             # Config dir, config.toml, output dir
 │   ├── log/                # history.log writer
+│   ├── theme/              # Color theme system (13 themes)
 │   ├── uninstall/          # Self-uninstall logic
 │   └── version/            # Build metadata vars
 ├── build.ps1               # Windows cross-compile script

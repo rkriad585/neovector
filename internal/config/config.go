@@ -17,6 +17,7 @@ const (
 type Config struct {
 	General GeneralConfig `toml:"general"`
 	Network NetworkConfig `toml:"network"`
+	Theme   ThemeConfig   `toml:"theme"`
 }
 
 type GeneralConfig struct {
@@ -25,6 +26,11 @@ type GeneralConfig struct {
 
 type NetworkConfig struct {
 	Proxy string `toml:"proxy"`
+}
+
+type ThemeConfig struct {
+	Name string `toml:"name"`
+	Mode string `toml:"mode"`
 }
 
 var (
@@ -39,6 +45,10 @@ func DefaultConfig() *Config {
 		},
 		Network: NetworkConfig{
 			Proxy: "",
+		},
+		Theme: ThemeConfig{
+			Name: "sunny_beach_day",
+			Mode: "dark",
 		},
 	}
 }

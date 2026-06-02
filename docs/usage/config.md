@@ -9,6 +9,9 @@ neovector config
 neovector config --format <txt|json>
 neovector config --proxy <url>
 neovector config --edit
+neovector config theme                  # Show theme info
+neovector config theme <name>           # Switch theme
+neovector config theme --edit           # Interactive theme picker
 ```
 
 ## Flags
@@ -40,7 +43,11 @@ Output:
   [network]
     proxy = ""
 
-  Run 'neovector config --edit' to modify interactively.
+  [theme]
+    name = "sunny_beach_day"
+    mode = "dark"
+
+  Run 'neovector config --edit' or 'neovector config theme --edit' to modify.
 ```
 
 ### Set format directly
@@ -70,9 +77,15 @@ neovector config --edit
 Opens a TUI form with:
 - **Default Output Format** — select between TXT and JSON
 - **Proxy URL** — text input for the proxy address
+- **Color Theme** — select from 13 available themes
 
 Changes are saved immediately when the form is submitted.
 If no changes are made, a "No changes made." message is shown.
+
+## Theme Management
+
+See the [Themes](themes.md) page for full details on all available themes
+and how to switch between them.
 
 ## Configuration File
 
@@ -84,12 +97,17 @@ default_format = "txt"
 
 [network]
 proxy = ""
+
+[theme]
+name = "sunny_beach_day"
+mode = "dark"
 ```
 
 ## Runtime Reloading
 
 Changes take effect immediately for subsequent commands within the same
 session. The in-memory config is updated atomically and persisted to disk.
+Theme changes are applied immediately to the terminal output.
 
 ## Notes
 

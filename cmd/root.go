@@ -9,17 +9,31 @@ import (
 
 	"github.com/rkriad585/neovector/internal/banner"
 	"github.com/rkriad585/neovector/internal/config"
+	"github.com/rkriad585/neovector/internal/theme"
 	"github.com/rkriad585/neovector/internal/uninstall"
 	"github.com/rkriad585/neovector/internal/version"
 )
 
 var (
-	Cyan   = color.New(color.FgCyan, color.Bold)
-	Green  = color.New(color.FgGreen, color.Bold)
-	Red    = color.New(color.FgRed, color.Bold)
-	Yellow = color.New(color.FgYellow)
-	Magenta = color.New(color.FgMagenta)
+	Cyan    *color.Color
+	Green   *color.Color
+	Red     *color.Color
+	Yellow  *color.Color
+	Magenta *color.Color
 )
+
+func init() {
+	applyTheme("sunny_beach_day")
+}
+
+func applyTheme(name string) {
+	c := theme.Resolve(name)
+	Cyan = c.Primary
+	Green = c.Success
+	Yellow = c.Warning
+	Red = c.Error
+	Magenta = c.Accent
+}
 
 var rootCmd = &cobra.Command{
 	Use:     "neovector",
@@ -39,7 +53,10 @@ func initSystem() error {
 	if err := config.EnsureConfigDir(); err != nil {
 		return err
 	}
-	config.Get()
+	cfg := config.Get()
+	if cfg.Theme.Name != "" {
+		applyTheme(cfg.Theme.Name)
+	}
 	return nil
 }
 

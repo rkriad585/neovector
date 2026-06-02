@@ -18,6 +18,10 @@ default_format = "txt"
 
 [network]
 proxy = ""
+
+[theme]
+name = "sunny_beach_day"
+mode = "dark"
 ```
 
 ### Options
@@ -26,6 +30,8 @@ proxy = ""
 |-----|------|---------|-------------|
 | `general.default_format` | string | `"txt"` | Default vector format: `txt` or `json` |
 | `network.proxy` | string | `""` | Proxy URL for self-update (e.g. `http://proxy:8080`) |
+| `theme.name` | string | `"sunny_beach_day"` | Color theme name (see 13 built-in themes) |
+| `theme.mode` | string | `"dark"` | Theme mode: `"dark"` or `"light"` |
 
 ## history.log
 
