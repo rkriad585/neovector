@@ -22,6 +22,7 @@ type Config struct {
 
 type GeneralConfig struct {
 	DefaultFormat string `toml:"default_format"`
+	OutputDir     string `toml:"output_dir"`
 }
 
 type NetworkConfig struct {
@@ -36,12 +37,47 @@ type ThemeConfig struct {
 var (
 	global *Config
 	mu     sync.RWMutex
+
+	// Transient overrides set by root command flags (not persisted).
+	outputDirOverride string
+	formatOverride    string
 )
+
+func SetOutputDirOverride(dir string) { outputDirOverride = dir }
+
+func SetFormatOverride(f string) { formatOverride = f }
+
+func GetOutputDir() string {
+	if outputDirOverride != "" {
+		return outputDirOverride
+	}
+	cfg := Get()
+	if cfg.General.OutputDir != "" {
+		return cfg.General.OutputDir
+	}
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return ""
+	}
+	return filepath.Join(home, "Downloads", appDirName, ProjectName)
+}
+
+func GetDefaultFormat() string {
+	if formatOverride != "" {
+		return formatOverride
+	}
+	cfg := Get()
+	if cfg.General.DefaultFormat != "" {
+		return cfg.General.DefaultFormat
+	}
+	return "txt"
+}
 
 func DefaultConfig() *Config {
 	return &Config{
 		General: GeneralConfig{
 			DefaultFormat: "txt",
+			OutputDir:     "",
 		},
 		Network: NetworkConfig{
 			Proxy: "",
@@ -161,11 +197,11 @@ func OutputDir() string {
 }
 
 func EnsureOutputDir() error {
-	return os.MkdirAll(OutputDir(), 0755)
+	return os.MkdirAll(GetOutputDir(), 0755)
 }
 
 func OutputFile(name string) string {
-	return filepath.Join(OutputDir(), name)
+	return filepath.Join(GetOutputDir(), name)
 }
 
 func ResolveOutput(path string) string {

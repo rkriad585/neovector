@@ -6,7 +6,8 @@ Display, modify, or interactively edit the neovector configuration.
 
 ```bash
 neovector config
-neovector config --format <txt|json>
+neovector config --format <txt|json|csv|bin>
+neovector config --output-dir <path>
 neovector config --proxy <url>
 neovector config --edit
 neovector config theme                  # Show theme info
@@ -18,7 +19,8 @@ neovector config theme --edit           # Interactive theme picker
 
 | Flag | Type | Description |
 |------|------|-------------|
-| `--format` | string | Set default output format (`txt` or `json`) |
+| `--format` | string | Set default output format (`txt`, `json`, `csv`, `bin`) |
+| `--output-dir` | string | Set default output directory |
 | `--proxy`  | string | Set proxy URL for self-update |
 | `--edit`   | bool   | Open interactive TUI form editor |
 
@@ -39,6 +41,7 @@ Output:
 
   [general]
     default_format = "txt"
+    output_dir     = ""
 
   [network]
     proxy = ""
@@ -53,7 +56,19 @@ Output:
 ### Set format directly
 
 ```bash
-neovector config --format json
+neovector config --format csv
+```
+
+### Set output directory directly
+
+```bash
+neovector config --output-dir "~/projects/vectors"
+```
+
+### Clear output directory (restore default)
+
+```bash
+neovector config --output-dir ""
 ```
 
 ### Set proxy directly
@@ -75,7 +90,8 @@ neovector config --edit
 ```
 
 Opens a TUI form with:
-- **Default Output Format** — select between TXT and JSON
+- **Default Output Format** — select between TXT, JSON, CSV, Binary
+- **Output Directory** — text input for custom output location
 - **Proxy URL** — text input for the proxy address
 - **Color Theme** — select from 13 available themes
 
@@ -94,6 +110,7 @@ and how to switch between them.
 ```toml
 [general]
 default_format = "txt"
+output_dir = ""
 
 [network]
 proxy = ""

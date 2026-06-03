@@ -24,6 +24,8 @@ var (
 
 func init() {
 	applyTheme("sunny_beach_day")
+	rootCmd.PersistentFlags().String("output-dir", "", "Default output directory (overrides config)")
+	rootCmd.PersistentFlags().String("format", "", "Default output format: txt, json, csv, bin (overrides config)")
 }
 
 func applyTheme(name string) {
@@ -38,20 +40,23 @@ func applyTheme(name string) {
 var rootCmd = &cobra.Command{
 	Use:     "neovector",
 	Short:   "Convert between images and their numerical vector representations",
-	Long: `neovector is a CLI tool for seamless conversion between raster images
-and their numerical vector representations (flat lists of RGB pixel values).
-
-It supports converting images to vectors, reconstructing images from vectors,
-and inspecting dimensions of images or vector files.`,
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-		return initSystem()
+		return initSystem(cmd)
 	},
 }
 
-func initSystem() error {
+func initSystem(cmd *cobra.Command) error {
 	cfg := config.Get()
 	if cfg.Theme.Name != "" {
 		applyTheme(cfg.Theme.Name)
+	}
+	if cmd.Flags().Changed("output-dir") {
+		dir, _ := cmd.Flags().GetString("output-dir")
+		config.SetOutputDirOverride(dir)
+	}
+	if cmd.Flags().Changed("format") {
+		f, _ := cmd.Flags().GetString("format")
+		config.SetFormatOverride(f)
 	}
 	return nil
 }

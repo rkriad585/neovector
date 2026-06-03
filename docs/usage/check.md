@@ -6,7 +6,7 @@ from a vector file.
 ## Usage
 
 ```bash
-neovector check [--image <path>] [--vector <path>] [--format txt|json]
+neovector check [--image <path>] [--vector <path>] [--format txt|json|csv|bin]
 ```
 
 ## Flags
@@ -15,7 +15,9 @@ neovector check [--image <path>] [--vector <path>] [--format txt|json]
 |------|-------|-------------|
 | `--image` | `-i` | Path to an image file |
 | `--vector` | `-v` | Path to a vector file |
-| `--format` | | Vector file format: `txt` or `json` (default: `txt`) |
+| `--format` | | Vector file format: `txt`, `json`, `csv`, or `bin` (default: `txt`) |
+
+Format is auto-detected from the vector file extension when `--format` is not set.
 
 ## Examples
 
@@ -37,10 +39,16 @@ neovector check --vector vector.txt
 neovector check --image photo.jpg --vector vector.txt
 ```
 
+### Use with CSV format
+
+```bash
+neovector check --vector vector.csv
+```
+
 ### Use with JSON format
 
 ```bash
-neovector check --vector vector.json --format json
+neovector check --vector vector.json
 ```
 
 ## Output
@@ -53,5 +61,6 @@ neovector check --vector vector.json --format json
 
 ### Vector check shows
 
+- Header dimensions (if present in the file)
 - Vector format and size
 - All possible (width, height) pairs if the size is divisible by 3

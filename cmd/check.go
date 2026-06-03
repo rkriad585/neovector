@@ -23,7 +23,7 @@ Examples:
 	RunE: func(cmd *cobra.Command, args []string) error {
 		imagePath, _ := cmd.Flags().GetString("image")
 		vectorPath, _ := cmd.Flags().GetString("vector")
-		format, _ := cmd.Flags().GetString("format")
+		format := getFormatFlag(cmd, vectorPath)
 
 		if imagePath == "" && vectorPath == "" {
 			return cmd.Help()
@@ -58,13 +58,17 @@ Examples:
 		}
 
 		if vectorPath != "" {
-			data, err := readVector(vectorPath, format)
+			vd, err := readVector(vectorPath, format)
 			if err != nil {
 				Red.Printf("Error: %v\n", err)
 				return err
 			}
+			data := vd.Data
 
 			size := len(data)
+			if vd.Width > 0 && vd.Height > 0 {
+				fmt.Printf("  ├─ Header Dimensions: %d x %d\n", vd.Width, vd.Height)
+			}
 			fmt.Println()
 			Cyan.Printf("  Vector: %s\n", vectorPath)
 			fmt.Printf("  ├─ Format:         %s\n", strings.ToUpper(format))
@@ -134,7 +138,7 @@ Examples:
 func init() {
 	checkCmd.Flags().StringP("image", "i", "", "Path to the image file")
 	checkCmd.Flags().StringP("vector", "v", "", "Path to the vector file")
-	checkCmd.Flags().String("format", "txt", "Vector file format (txt or json)")
+	checkCmd.Flags().String("format", "txt", "Vector file format (txt, json, csv, bin)")
 
 	rootCmd.AddCommand(checkCmd)
 }

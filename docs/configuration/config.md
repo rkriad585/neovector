@@ -15,6 +15,7 @@ Created automatically on first run.
 ```toml
 [general]
 default_format = "txt"
+output_dir = ""
 
 [network]
 proxy = ""
@@ -28,7 +29,8 @@ mode = "dark"
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
-| `general.default_format` | string | `"txt"` | Default vector format: `txt` or `json` |
+| `general.default_format` | string | `"txt"` | Default vector format: `txt`, `json`, `csv`, `bin` |
+| `general.output_dir` | string | `""` | Custom output directory (empty = use default `~/Downloads/neostore/neovector/`) |
 | `network.proxy` | string | `""` | Proxy URL for self-update (e.g. `http://proxy:8080`) |
 | `theme.name` | string | `"sunny_beach_day"` | Color theme name (see 13 built-in themes) |
 | `theme.mode` | string | `"dark"` | Theme mode: `"dark"` or `"light"` |
@@ -52,5 +54,5 @@ Converted files (vectors, images) default to:
 | Linux    | `~/Downloads/neostore/neovector/` |
 | macOS    | `~/Downloads/neostore/neovector/` |
 
-Use an absolute or explicit relative path (e.g. `./output.txt`)
-to save elsewhere.
+Override with `general.output_dir` in config, `--output-dir` flag on root,
+or use an absolute/explicit relative path (e.g. `./output.txt`).

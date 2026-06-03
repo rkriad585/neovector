@@ -3,6 +3,7 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/charmbracelet/huh"
 	"github.com/spf13/cobra"
@@ -53,6 +54,7 @@ func init() {
 	rootCmd.AddCommand(configCmd)
 	configCmd.Flags().Bool("edit", false, "Edit configuration interactively")
 	configCmd.Flags().String("format", "", "Set default output format (txt or json)")
+	configCmd.Flags().String("output-dir", "", "Set default output directory")
 	configCmd.Flags().String("proxy", "", "Set proxy URL for self-update")
 	configCmd.AddCommand(configThemeCmd)
 	configThemeCmd.Flags().Bool("edit", false, "Choose a theme interactively")
@@ -61,23 +63,28 @@ func init() {
 func configRun(cmd *cobra.Command, args []string) error {
 	edit, _ := cmd.Flags().GetBool("edit")
 	format, _ := cmd.Flags().GetString("format")
+	outputDir, _ := cmd.Flags().GetString("output-dir")
 	proxy, _ := cmd.Flags().GetString("proxy")
 
 	formatChanged := cmd.Flags().Changed("format")
+	outputDirChanged := cmd.Flags().Changed("output-dir")
 	proxyChanged := cmd.Flags().Changed("proxy")
 
 	if edit {
 		return configEditForm()
 	}
 
-	if formatChanged || proxyChanged {
+	if formatChanged || outputDirChanged || proxyChanged {
 		cfg := config.Get()
 
 		if formatChanged {
-			if format != "txt" && format != "json" {
-				return fmt.Errorf("invalid format %q: must be 'txt' or 'json'", format)
+			if !isValidFormat(format) {
+				return fmt.Errorf("invalid format %q: must be one of %s", format, strings.Join(validFormats, ", "))
 			}
 			cfg.General.DefaultFormat = format
+		}
+		if outputDirChanged {
+			cfg.General.OutputDir = outputDir
 		}
 		if proxyChanged {
 			cfg.Network.Proxy = proxy
@@ -98,6 +105,7 @@ func configRun(cmd *cobra.Command, args []string) error {
 	fmt.Println()
 	Cyan.Println("  [general]")
 	fmt.Printf("    default_format = %q\n", cfg.General.DefaultFormat)
+	fmt.Printf("    output_dir     = %q\n", cfg.General.OutputDir)
 	fmt.Println()
 	Cyan.Println("  [network]")
 	fmt.Printf("    proxy = %q\n", cfg.Network.Proxy)
@@ -114,6 +122,7 @@ func configEditForm() error {
 	cfg := config.Get()
 
 	originalFormat := cfg.General.DefaultFormat
+	originalOutputDir := cfg.General.OutputDir
 	originalProxy := cfg.Network.Proxy
 	originalTheme := cfg.Theme.Name
 
@@ -132,8 +141,16 @@ func configEditForm() error {
 				Options(
 					huh.NewOption("Text (.txt)", "txt"),
 					huh.NewOption("JSON (.json)", "json"),
+					huh.NewOption("CSV  (.csv)", "csv"),
+					huh.NewOption("Binary (.bin)", "bin"),
 				).
 				Value(&cfg.General.DefaultFormat),
+
+			huh.NewInput().
+				Title("Output Directory").
+				Description("Default directory for output files (leave empty for default)").
+				Placeholder(config.OutputDir()).
+				Value(&cfg.General.OutputDir),
 
 			huh.NewInput().
 				Title("Proxy URL").
@@ -158,6 +175,7 @@ func configEditForm() error {
 	}
 
 	if cfg.General.DefaultFormat == originalFormat &&
+		cfg.General.OutputDir == originalOutputDir &&
 		cfg.Network.Proxy == originalProxy &&
 		cfg.Theme.Name == originalTheme {
 		Yellow.Println("  No changes made.")
